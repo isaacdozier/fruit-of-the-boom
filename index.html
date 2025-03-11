@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Fruit of the Boom</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background-color: #ffd1dc;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            box-sizing: border-box;
+        }
+        
+        html {
+            height: -webkit-fill-available;
+        }
+        
+        h1 {
+            color: #ff4081;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            margin-top: 5px;
+            margin-bottom: 10px;
+            font-size: clamp(24px, 7vw, 32px);
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: min(90vw, 90vh);
+            margin-bottom: 10px;
+        }
+        
+        .score-box {
+            background-color: white;
+            border-radius: 10px;
+            padding: 6px 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: clamp(14px, 4vw, 16px);
+        }
+        
+        .score {
+            font-weight: bold;
+            color: #ff4081;
+        }
+        
+        .objectives-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: min(90vw, 90vh);
+            background-color: white;
+            border-radius: 10px;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .objective-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ff4081;
+            font-size: clamp(14px, 4vw, 16px);
+        }
+        
+        .objective-items {
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .objective-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 5px;
+        }
+        
+        .objective-icon {
+            font-size: clamp(20px, 6vw, 24px);
+            margin-bottom: 2px;
+        }
+        
+        .objective-count {
+            display: flex;
+            align-items: center;
+            font-size: clamp(12px, 3.5vw, 14px);
+        }
+        
+        .objective-progress {
+            width: 100%;
+            height: 6px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            margin-top: 3px;
+            overflow: hidden;
+        }
+        
+        .objective-bar {
+            height: 100%;
+            background-color: #4caf50;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 1px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            width: calc(min(90vw, 90vh) - 10px);
+            height: calc(min(90vw, 90vh) - 10px);
+            max-width: 500px;
+            max-height: 500px;
+        }
+        
+        .candy {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: clamp(16px, 5vw, 24px);
+            transition: transform 0.2s ease;
+            touch-action: manipulation;
+        }
+        
+        .candy.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px white;
+        }
+        
+        .candy:hover {
+            transform: scale(1.05);
+        }
+        
+        .candy.selected:hover {
+            transform: scale(1.1);
+        }
+
+        .new-candy {
+            animation: dropIn 0.3s ease-out forwards;
+        }
+        
+        @keyframes dropIn {
+            from {
+                transform: translateY(-40px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            40% {
+                transform: scale(1.3);
+                opacity: 1;
+            }
+            60% {
+                transform: scale(1.4);
+                filter: brightness(1.5);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes shakeBoard {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            10% { transform: translate(-2px, -2px) rotate(-0.5deg); }
+            20% { transform: translate(2px, 2px) rotate(0.5deg); }
+            30% { transform: translate(-2px, 1px) rotate(-0.5deg); }
+            40% { transform: translate(2px, -1px) rotate(0.5deg); }
+            50% { transform: translate(-1px, 2px) rotate(-0.5deg); }
+            60% { transform: translate(1px, -2px) rotate(0.5deg); }
+            70% { transform: translate(-1px, -1px) rotate(-0.5deg); }
+            80% { transform: translate(1px, 1px) rotate(0.5deg); }
+            90% { transform: translate(-1px, 0) rotate(-0.25deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        .matched {
+            animation: pop 0.4s ease-out forwards;
+            z-index: 10;
+            position: relative;
+        }
+        
+        .shake {
+            animation: shakeBoard 0.5s ease;
+        }
+        
+        .explosion {
+            position: absolute;
+            pointer-events: none;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,212,59,0.6) 30%, rgba(255,111,0,0.4) 70%, rgba(255,0,0,0) 100%);
+            border-radius: 50%;
+            z-index: 5;
+            opacity: 0;
+            transform: scale(0.1);
+            animation: explode 0.6s ease-out forwards;
+        }
+        
+        @keyframes explode {
+            0% {
+                transform: scale(0.1);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 0.6;
+            }
+            80% {
+                transform: scale(3);
+                opacity: 0.3;
+            }
+            100% {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background-color: #ff4081;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.2s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        button:hover, button:active {
+            background-color: #e03070;
+        }
+        
+        @media (max-width: 400px) {
+            body {
+                padding: 15px 10px;
+            }
+            
+            h1 {
+                font-size: 28px;
+                margin-bottom: 10px;
+            }
+            
+            .score-box {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 15px;
+            }
+        }
+        
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+        }
+        
+        .game-over h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #ff4081;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Candy colors */
+        .red { background-color: #ff4081; }
+        .blue { background-color: #2196f3; }
+        .green { background-color: #4caf50; }
+        .yellow { background-color: #ffeb3b; color: #333; }
+        .purple { background-color: #9c27b0; }
+        .orange { background-color: #ff9800; }
+    </style>
+</head>
+<body>
+    <h1>Fruit of the Boom</h1>
+    
+    <div class="score-container">
+        <div class="score-box">Score: <span id="score" class="score">0</span></div>
+        <div class="score-box">Moves: <span id="moves" class="score">20</span></div>
+    </div>
+    
+    <div class="objectives-container">
+        <div class="objective-title">Collect these fruits:</div>
+        <div id="objectives" class="objective-items">
+            <!-- Objectives will be populated here -->
+        </div>
+    </div>
+    
+    <div id="board" class="game-board"></div>
+    
+    <button id="restart-btn">Restart Game</button>
+    
+    <div id="game-over" class="game-over hidden">
+        <h2>Game Over!</h2>
+        <p>Your final score: <span id="final-score">0</span></p>
+        <button id="play-again-btn">Play Again</button>
+    </div>
+    
+    <script>
+        // Wait for the DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game board size
+            const BOARD_SIZE = 8;
+            
+            // Available candy types
+            const CANDY_TYPES = [
+                { type: 'red', symbol: '🍓' },
+                { type: 'blue', symbol: '🫐' },
+                { type: 'green', symbol: '🥝' },
+                { type: 'yellow', symbol: '🍋' },
+                { type: 'purple', symbol: '🍇' },
+                { type: 'orange', symbol: '🍊' }
+            ];
+            
+            // Game elements
+            const board = document.getElementById('board');
+            const scoreElement = document.getElementById('score');
+            const movesElement = document.getElementById('moves');
+            const gameOverElement = document.getElementById('game-over');
+            const finalScoreElement = document.getElementById('final-score');
+            const restartButton = document.getElementById('restart-btn');
+            const playAgainButton = document.getElementById('play-again-btn');
+            
+            // Game state
+            let gameBoard = [];
+            let score = 0;
+            let moves = 20;
+            let selectedCandy = null;
+            let isSwapping = false;
+            let gameActive = true;
+            let objectives = [];
+            
+            // Initialize the game
+            function initGame() {
+                // Reset game state
+                gameBoard = [];
+                score = 0;
+                moves = 20;
+                selectedCandy = null;
+                isSwapping = false;
+                gameActive = true;
+                
+                // Set random objectives
+                setRandomObjectives();
+                
+                // Update UI
+                scoreElement.textContent = score;
+                movesElement.textContent = moves;
+                gameOverElement.classList.add('hidden');
+                
+                // Clear the board
+                board.innerHTML = '';
+                
+                // Create new board
+                createBoard();
+                
+                // Check for initial matches
+                removeInitialMatches();
+                
+                // Set up touch events
+                initTouchEvents();
+            }
+            
+            // Set random objectives
+            function setRandomObjectives() {
+                // Clear objectives
+                objectives = [];
+                const objectivesContainer = document.getElementById('objectives');
+                objectivesContainer.innerHTML = '';
+                
+                // Get 2 random candy types for objectives
+                const shuffledTypes = [...CANDY_TYPES].sort(() => 0.5 - Math.random());
+                const objectiveTypes = shuffledTypes.slice(0, 2);
+                
+                // Create objectives (clear 10-15 of each type)
+                objectiveTypes.forEach(candy => {
+                    // Random target between 10-15
+                    const target = 10 + Math.floor(Math.random() * 6);
+                    
+                    // Add to objectives array
+                    objectives.push({
+                        type: candy.type,
+                        symbol: candy.symbol,
+                        current: 0,
+                        target: target
+                    });
+                    
+                    // Create UI element
+                    const objectiveElement = document.createElement('div');
+                    objectiveElement.className = 'objective-item';
+                    objectiveElement.innerHTML = `
+                        <div class="objective-icon">${candy.symbol}</div>
+                        <div class="objective-count">
+                            <span id="${candy.type}-count">0</span>/<span>${target}</span>
+                        </div>
+                        <div class="objective-progress">
+                            <div id="${candy.type}-progress" class="objective-bar" style="width: 0%"></div>
+                        </div>
+                    `;
+                    
+                    objectivesContainer.appendChild(objectiveElement);
+                });
+            }
+            
+            // Update objectives progress
+            function updateObjectives(matches) {
+                let allObjectivesMet = true;
+                
+                // Count matched candies by type
+                const matchedCounts = {};
+                
+                matches.forEach(match => {
+                    const { row, col } = match;
+                    const candyType = gameBoard[row][col].type;
+                    
+                    if (!matchedCounts[candyType]) {
+                        matchedCounts[candyType] = 0;
+                    }
+                    
+                    matchedCounts[candyType]++;
+                });
+                
+                // Update objectives
+                objectives.forEach(objective => {
+                    if (matchedCounts[objective.type]) {
+                        objective.current += matchedCounts[objective.type];
+                        
+                        // Cap at target
+                        if (objective.current > objective.target) {
+                            objective.current = objective.target;
+                        }
+                        
+                        // Update UI
+                        const countElement = document.getElementById(`${objective.type}-count`);
+                        const progressElement = document.getElementById(`${objective.type}-progress`);
+                        
+                        if (countElement && progressElement) {
+                            countElement.textContent = objective.current;
+                            const progressPercent = (objective.current / objective.target) * 100;
+                            progressElement.style.width = `${progressPercent}%`;
+                        }
+                    }
+                    
+                    // Check if this objective is not met
+                    if (objective.current < objective.target) {
+                        allObjectivesMet = false;
+                    }
+                });
+                
+                // Check if all objectives are met
+                if (allObjectivesMet) {
+                    gameWon();
+                }
+            }
+            
+            // Create the game board
+            function createBoard() {
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    gameBoard[row] = [];
+                    
+                    for (let col = 0; col < BOARD_SIZE; col++) {
+                        // Get a random candy that doesn't create a match
+                        const candy = getRandomCandy(row, col);
+                        gameBoard[row][col] = candy;
+                        
+                        // Create candy element
+                        const candyElement = document.createElement('div');
+                        candyElement.className = `candy ${candy.type}`;
+                        candyElement.dataset.row = row;
+                        candyElement.dataset.col = col;
+                        candyElement.textContent = candy.symbol;
+                        
+                        // Add click/touch event
+                        candyElement.addEventListener('click', () => {
+                            if (!gameActive || isSwapping) return;
+                            handleCandyClick(candyElement);
+                        });
+                        
+                        // Add touch events to improve mobile experience
+                        candyElement.addEventListener('touchstart', (e) => {
+                            if (!gameActive || isSwapping) return;
+                            // Prevent default to avoid delays on mobile
+                            e.preventDefault();
+                            handleCandyClick(candyElement);
+                        }, { passive: false });
+                        
+                        // Add to board
+                        board.appendChild(candyElement);
+                    }
+                }
+            }
+            
+            // Get a random candy
+            function getRandomCandy(row, col) {
+                let newCandy;
+                let validCandy = false;
+                
+                // Try until we get a candy that doesn't create an initial match
+                while (!validCandy) {
+                    const randomIndex = Math.floor(Math.random() * CANDY_TYPES.length);
+                    newCandy = CANDY_TYPES[randomIndex];
+                    validCandy = true;
+                    
+                    // Check horizontal match (need at least 2 candies to check)
+                    if (col >= 2) {
+                        if (gameBoard[row][col-1].type === newCandy.type && 
+                            gameBoard[row][col-2].type === newCandy.type) {
+                            validCandy = false;
+                            continue;
+                        }
+                    }
+                    
+                    // Check vertical match (need at least 2 candies to check)
+                    if (row >= 2) {
+                        if (gameBoard[row-1][col].type === newCandy.type && 
+                            gameBoard[row-2][col].type === newCandy.type) {
+                            validCandy = false;
+                            continue;
+                        }
+                    }
+                }
+                
+                return newCandy;
+            }
+            
+            // Remove any initial matches
+            function removeInitialMatches() {
+                let hasMatches = true;
+                
+                // Keep checking until no more matches
+                while (hasMatches) {
+                    hasMatches = false;
+                    
+                    // Find and remove matches
+                    const matches = findMatches();
+                    
+                    if (matches.length > 0) {
+                        hasMatches = true;
+                        
+                        // Replace matched candies
+                        for (const match of matches) {
+                            const { row, col } = match;
+                            const randomIndex = Math.floor(Math.random() * CANDY_TYPES.length);
+                            gameBoard[row][col] = CANDY_TYPES[randomIndex];
+                        }
+                        
+                        // Update board display
+                        updateBoardDisplay();
+                    }
+                }
+            }
+            
+            // Handle candy click
+            function handleCandyClick(candyElement) {
+                const row = parseInt(candyElement.dataset.row);
+                const col = parseInt(candyElement.dataset.col);
+                
+                // If no candy is selected yet
+                if (!selectedCandy) {
+                    // Select this candy
+                    selectedCandy = candyElement;
+                    candyElement.classList.add('selected');
+                } else {
+                    // If same candy was clicked again, deselect it
+                    if (selectedCandy === candyElement) {
+                        selectedCandy.classList.remove('selected');
+                        selectedCandy = null;
+                        return;
+                    }
+                    
+                    // Get positions of both candies
+                    const selectedRow = parseInt(selectedCandy.dataset.row);
+                    const selectedCol = parseInt(selectedCandy.dataset.col);
+                    
+                    // Check if candies are adjacent
+                    if (isAdjacent(selectedRow, selectedCol, row, col)) {
+                        swapCandies(selectedRow, selectedCol, row, col);
+                        
+                        // Decrease moves
+                        moves--;
+                        movesElement.textContent = moves;
+                        
+                        // Check if out of moves
+                        if (moves <= 0) {
+                            setTimeout(() => {
+                                gameOver();
+                            }, 1000);
+                        }
+                    } else {
+                        // Not adjacent, deselect and select new candy
+                        selectedCandy.classList.remove('selected');
+                        selectedCandy = candyElement;
+                        candyElement.classList.add('selected');
+                    }
+                }
+            }
+            
+            // Check if two positions are adjacent
+            function isAdjacent(row1, col1, row2, col2) {
+                return (
+                    (Math.abs(row1 - row2) === 1 && col1 === col2) || 
+                    (Math.abs(col1 - col2) === 1 && row1 === row2)
+                );
+            }
+            
+            // Swap two candies
+            function swapCandies(row1, col1, row2, col2) {
+                isSwapping = true;
+                
+                // Deselect the candy
+                selectedCandy.classList.remove('selected');
+                selectedCandy = null;
+                
+                // Swap in the data model
+                const temp = gameBoard[row1][col1];
+                gameBoard[row1][col1] = gameBoard[row2][col2];
+                gameBoard[row2][col2] = temp;
+                
+                // Update the board display
+                updateBoardDisplay();
+                
+                // Check if the swap creates a match
+                setTimeout(() => {
+                    const matches = findMatches();
+                    
+                    if (matches.length === 0) {
+                        // No match, swap back
+                        const temp = gameBoard[row1][col1];
+                        gameBoard[row1][col1] = gameBoard[row2][col2];
+                        gameBoard[row2][col2] = temp;
+                        
+                        // Update the board display
+                        updateBoardDisplay();
+                        
+                        isSwapping = false;
+                    } else {
+                        // There's a match, remove matched candies
+                        processMatches(matches);
+                    }
+                }, 300);
+            }
+            
+            // Find all matching candies (3 or more in a row/column)
+            function findMatches() {
+                const matches = [];
+                
+                // Check horizontal matches
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    for (let col = 0; col < BOARD_SIZE - 2; col++) {
+                        const type = gameBoard[row][col].type;
+                        
+                        if (type === gameBoard[row][col+1].type && 
+                            type === gameBoard[row][col+2].type) {
+                            
+                            // Add all matching candies to the matches array
+                            let matchLength = 3;
+                            while (col + matchLength < BOARD_SIZE && 
+                                   gameBoard[row][col+matchLength].type === type) {
+                                matchLength++;
+                            }
+                            
+                            for (let i = 0; i < matchLength; i++) {
+                                matches.push({ row, col: col + i });
+                            }
+                            
+                            // Bigger matches get a special sound effect later
+                            if (matchLength > 3) {
+                                // Will add sound effects in the future
+                            }
+                            
+                            // Skip the candies we've already matched
+                            col += matchLength - 1;
+                        }
+                    }
+                }
+                
+                // Check vertical matches
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    for (let row = 0; row < BOARD_SIZE - 2; row++) {
+                        const type = gameBoard[row][col].type;
+                        
+                        if (type === gameBoard[row+1][col].type && 
+                            type === gameBoard[row+2][col].type) {
+                            
+                            // Add all matching candies to the matches array
+                            let matchLength = 3;
+                            while (row + matchLength < BOARD_SIZE && 
+                                   gameBoard[row+matchLength][col].type === type) {
+                                matchLength++;
+                            }
+                            
+                            for (let i = 0; i < matchLength; i++) {
+                                matches.push({ row: row + i, col });
+                            }
+                            
+                            // Bigger matches get a special sound effect later
+                            if (matchLength > 3) {
+                                // Will add sound effects in the future
+                            }
+                            
+                            // Skip the candies we've already matched
+                            row += matchLength - 1;
+                        }
+                    }
+                }
+                
+                // Remove duplicates (candies that are part of both horizontal and vertical matches)
+                return matches.filter((match, index, self) => 
+                    index === self.findIndex(m => m.row === match.row && m.col === match.col)
+                );
+            }
+            
+            // Process matched candies
+            function processMatches(matches) {
+                // Add to score (10 points per candy)
+                score += matches.length * 10;
+                scoreElement.textContent = score;
+                
+                // Update objectives progress
+                updateObjectives(matches);
+                
+                // Mark matched candies for animation
+                for (const match of matches) {
+                    const candyElement = getCandyElement(match.row, match.col);
+                    candyElement.classList.add('matched');
+                    
+                    // Create explosion effect
+                    createExplosion(candyElement);
+                }
+                
+                // Shake the board
+                if (matches.length >= 3) {
+                    shakeBoard(matches.length);
+                }
+                
+                // After animation, remove matches and apply gravity
+                setTimeout(() => {
+                    applyGravity(matches);
+                }, 400);
+            }
+            
+            // Create explosion effect
+            function createExplosion(element) {
+                const rect = element.getBoundingClientRect();
+                const explosion = document.createElement('div');
+                explosion.className = 'explosion';
+                
+                // Position explosion
+                explosion.style.left = `${rect.left + rect.width / 2}px`;
+                explosion.style.top = `${rect.top + rect.height / 2}px`;
+                
+                // Add to document
+                document.body.appendChild(explosion);
+                
+                // Remove after animation completes
+                setTimeout(() => {
+                    document.body.removeChild(explosion);
+                }, 600);
+            }
+            
+            // Shake the board
+            function shakeBoard(matchSize) {
+                // Increase shake intensity for bigger matches
+                let intensity = matchSize > 4 ? 'shake-big' : 'shake';
+                board.classList.add('shake');
+                
+                // Remove class after animation
+                setTimeout(() => {
+                    board.classList.remove('shake');
+                }, 500);
+            }
+            
+            // Apply gravity - make candies fall and fill empty spaces
+            function applyGravity(matches) {
+                // Process each column from left to right
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    // Get matches in this column
+                    const matchesInCol = matches.filter(match => match.col === col);
+                    if (matchesInCol.length === 0) continue;
+                    
+                    // Create a new column array with non-matched candies
+                    let newColumn = [];
+                    
+                    // Keep all non-matched candies
+                    for (let row = 0; row < BOARD_SIZE; row++) {
+                        const isMatched = matchesInCol.some(match => match.row === row);
+                        if (!isMatched) {
+                            newColumn.push(gameBoard[row][col]);
+                        }
+                    }
+                    
+                    // Add new candies at the top to fill the column
+                    while (newColumn.length < BOARD_SIZE) {
+                        const randomIndex = Math.floor(Math.random() * CANDY_TYPES.length);
+                        newColumn.unshift(CANDY_TYPES[randomIndex]); // Add to the beginning
+                    }
+                    
+                    // Update the game board with the new column
+                    for (let row = 0; row < BOARD_SIZE; row++) {
+                        gameBoard[row][col] = newColumn[row];
+                    }
+                }
+                
+                // Update the board with new positions
+                updateBoardDisplay(true);
+                
+                // Check for new matches after gravity
+                setTimeout(() => {
+                    const newMatches = findMatches();
+                    
+                    if (newMatches.length > 0) {
+                        // Process the new matches
+                        processMatches(newMatches);
+                    } else {
+                        // No more matches, turn complete
+                        isSwapping = false;
+                    }
+                }, 500);
+            }
+            
+            // Update the visual board to match data model
+            function updateBoardDisplay(withAnimation = false) {
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    for (let col = 0; col < BOARD_SIZE; col++) {
+                        const candyElement = getCandyElement(row, col);
+                        const candy = gameBoard[row][col];
+                        
+                        // Remove old classes and add new type class
+                        CANDY_TYPES.forEach(type => {
+                            candyElement.classList.remove(type.type);
+                        });
+                        candyElement.classList.remove('matched', 'new-candy');
+                        
+                        candyElement.classList.add(candy.type);
+                        candyElement.textContent = candy.symbol;
+                        
+                        // Add animation for new candies
+                        if (withAnimation && row < matchesInColumn(col)) {
+                            candyElement.classList.add('new-candy');
+                        }
+                    }
+                }
+            }
+            
+            // Helper function to count how many matches were in a column
+            function matchesInColumn(col) {
+                let count = 0;
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    const candyElement = getCandyElement(row, col);
+                    if (candyElement.classList.contains('matched')) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+            
+            // Get candy element by position
+            function getCandyElement(row, col) {
+                return document.querySelector(`.candy[data-row="${row}"][data-col="${col}"]`);
+            }
+            
+            // Game over
+            function gameOver() {
+                gameActive = false;
+                finalScoreElement.textContent = score;
+                
+                // Check if any objectives were completed
+                let allCompleted = true;
+                for (const objective of objectives) {
+                    if (objective.current < objective.target) {
+                        allCompleted = false;
+                        break;
+                    }
+                }
+                
+                // Set appropriate message
+                const gameOverTitle = document.getElementById('game-over-title');
+                const gameOverMessage = document.getElementById('game-over-message');
+                
+                if (allCompleted) {
+                    gameOverTitle.textContent = 'You Win!';
+                    gameOverMessage.textContent = `Congratulations! Your score: ${score}`;
+                } else {
+                    gameOverTitle.textContent = 'Game Over!';
+                    gameOverMessage.textContent = `Your final score: ${score}`;
+                }
+                
+                gameOverElement.classList.remove('hidden');
+            }
+            
+            // Game won
+            function gameWon() {
+                gameActive = false;
+                finalScoreElement.textContent = score;
+                
+                // Set message
+                const gameOverTitle = document.getElementById('game-over-title');
+                const gameOverMessage = document.getElementById('game-over-message');
+                
+                gameOverTitle.textContent = 'Level Complete!';
+                gameOverMessage.textContent = `All objectives completed with ${moves} moves left! Score: ${score}`;
+                
+                // Add bonus for remaining moves (50 points per move)
+                if (moves > 0) {
+                    const bonus = moves * 50;
+                    score += bonus;
+                    finalScoreElement.textContent = score;
+                    gameOverMessage.textContent += ` (includes ${bonus} bonus points)`;
+                }
+                
+                gameOverElement.classList.remove('hidden');
+            }
+            
+            // Event listeners for buttons
+            restartButton.addEventListener('click', initGame);
+            playAgainButton.addEventListener('click', initGame);
+            
+            // Start the game
+            initGame();
+        });
+    </script>
+</body>
+</html>
